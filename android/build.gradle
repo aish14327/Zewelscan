@@ -35,11 +35,25 @@ task clean(type: Delete) {
 
 // ADDED THIS BLOCK TO FIX THE COMPILE ERROR
 subprojects {
-    afterEvaluate{ project ->
+    afterEvaluate { project ->
         if (project.hasProperty('android')) {
             android {
                 compileSdkVersion 35
                 buildToolsVersion '34.0.0'
+            }
+        }
+    }
+}
+
+// Added to enforce Java 17 compatibility
+subprojects {
+    afterEvaluate {
+        if (project.hasProperty('android')) {
+            android {
+                compileOptions {
+                    sourceCompatibility JavaVersion.VERSION_17
+                    targetCompatibility JavaVersion.VERSION_17
+                }
             }
         }
     }
