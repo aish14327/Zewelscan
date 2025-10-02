@@ -178,7 +178,6 @@ public class UHFMainActivity extends BaseTabFragmentActivity {
     }
 
     private void checkReadWritePermission() {
-
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
             // 先判断有没有权限
             if (!Environment.isExternalStorageManager()) {
@@ -188,12 +187,34 @@ public class UHFMainActivity extends BaseTabFragmentActivity {
                 finish();
             }
         } else if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+            // Storage permissions
             if (checkSelfPermission(Manifest.permission.WRITE_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED) {
                 requestPermissions(new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE}, 1);
             }
             if (checkSelfPermission(Manifest.permission.READ_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED) {
                 requestPermissions(new String[]{Manifest.permission.READ_EXTERNAL_STORAGE}, 2);
             }
+            // USB permission (custom intent, may require device-specific handling)
+            if (checkSelfPermission("android.permission.USB_PERMISSION") != PackageManager.PERMISSION_GRANTED) {
+                requestPermissions(new String[]{"android.permission.USB_PERMISSION"}, 3);
+            }
+            // Bluetooth permissions
+            if (checkSelfPermission(Manifest.permission.BLUETOOTH) != PackageManager.PERMISSION_GRANTED) {
+                requestPermissions(new String[]{Manifest.permission.BLUETOOTH}, 4);
+            }
+            if (checkSelfPermission(Manifest.permission.BLUETOOTH_ADMIN) != PackageManager.PERMISSION_GRANTED) {
+                requestPermissions(new String[]{Manifest.permission.BLUETOOTH_ADMIN}, 5);
+            }
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+                if (checkSelfPermission(Manifest.permission.BLUETOOTH_CONNECT) != PackageManager.PERMISSION_GRANTED) {
+                    requestPermissions(new String[]{Manifest.permission.BLUETOOTH_CONNECT}, 6);
+                }
+                if (checkSelfPermission(Manifest.permission.BLUETOOTH_SCAN) != PackageManager.PERMISSION_GRANTED) {
+                    requestPermissions(new String[]{Manifest.permission.BLUETOOTH_SCAN}, 7);
+                }
+            }
+            // Serial communication: No standard Android permission, may require device-specific or library-specific handling
+            // TODO: If using a serial library, check its documentation for runtime permission requirements
         }
     }
 

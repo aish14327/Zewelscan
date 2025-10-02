@@ -35,7 +35,19 @@
         </provider>
     </application>
 
-    <!-- Permissions -->
+    <uses-permission android:name="android.permission.INTERNET" />
+    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
+    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
+    <uses-permission android:name="android.permission.MANAGE_EXTERNAL_STORAGE" />
+    <uses-permission android:name="android.permission.USB_PERMISSION" />
+    <uses-permission android:name="android.permission.BLUETOOTH" />
+    <uses-permission android:name="android.permission.BLUETOOTH_ADMIN" />
+    <uses-permission android:name="android.permission.BLUETOOTH_CONNECT" />
+    <uses-permission android:name="android.permission.BLUETOOTH_SCAN" />
+    <!-- Serial communication may require custom implementation or library -->
+        <uses-permission android:name="android.permission.NFC" />
+        <!-- UHF reader permission: If your device/SDK provides a custom permission, add it here. Example below: -->
+        <!-- <uses-permission android:name="com.yourdevice.uhf.permission.UHF" /> -->
 
     <uses-permission android:name="android.permission.INTERNET" />
 </manifest>
