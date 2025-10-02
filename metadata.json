@@ -1,0 +1,5 @@
+{
+  "name": "ZewelScan",
+  "description": "A web application designed to mirror the functionality of a native RFID jewelry inventory scanner app for handheld devices like the Chainway C72. It allows users to simulate scanning inventory, view results, and identify scanned, missing, and new items.",
+  "requestFramePermissions": []
+}
