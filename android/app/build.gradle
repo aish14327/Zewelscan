@@ -44,6 +44,32 @@ dependencies {
 
 apply from: 'capacitor.build.gradle'
 
+// Custom task to rename APK after build
+import java.text.SimpleDateFormat
+import java.util.Date
+
+
+android {
+    applicationVariants.all { variant ->
+        if (variant.buildType.name == 'release') {
+            variant.outputs.all { output ->
+                output.processResources.doLast {
+                    def date = new Date()
+                    def formatted = new java.text.SimpleDateFormat("ddMMyyHHmm").format(date)
+                    def newName = "Zewelscan${formatted}.apk"
+                    def outputDir = output.outputFile.parent
+                    def oldFile = output.outputFile
+                    def newFile = new File(outputDir, newName)
+                    if (oldFile.exists()) {
+                        oldFile.renameTo(newFile)
+                        println "Renamed APK to ${newFile}"
+                    }
+                }
+            }
+        }
+    }
+}
+
 try {
     def servicesJSON = file('google-services.json')
     if (servicesJSON.text) {
