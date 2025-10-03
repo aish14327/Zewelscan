@@ -1,5 +1,6 @@
 
 import { JewelryItem } from '../types';
+import { UhfReader } from '../capacitor-uhf-reader';
 
 // Extend the Window interface to declare our custom function
 declare global {
@@ -11,13 +12,14 @@ declare global {
 class RFIDService {
   private masterInventory: JewelryItem[] = [];
   private isScanning = false;
+  private plugin = UhfReader;
 
   public updateMasterInventory(newInventory: JewelryItem[]): void {
     this.masterInventory = [...newInventory];
     console.log('RFID Service master inventory updated.');
   }
 
-  public startScan(onItemScanned: (item: JewelryItem) => void): void {
+  public async startScan(onItemScanned: (item: JewelryItem) => void): Promise<void> {
     if (this.isScanning) {
       console.warn('Scan listener is already active.');
       return;
@@ -26,43 +28,39 @@ class RFIDService {
     console.log('Starting RFID scan listener...');
     this.isScanning = true;
 
-    // This function will be called by the native Android wrapper
-    window.onRfidScan = (epc: string) => {
-      if (!this.isScanning) return;
-      
-      console.log(`Received EPC from native: ${epc}`);
-      
-      // Find the item in the master inventory
-      let foundItem = this.masterInventory.find(item => item.epc === epc);
-
-      if (foundItem) {
-        onItemScanned(foundItem);
-      } else {
-        // If the item is not in the master list, create a new item record
-        const newItem: JewelryItem = {
-          epc: epc,
-          name: 'Uncatalogued Item',
-          category: 'Unknown',
-          price: 0,
-          imageUrl: `https://picsum.photos/seed/${epc}/200`,
-          showroomArea: 'Unknown',
-          counterName: 'Unknown',
-        };
-        onItemScanned(newItem);
-      }
-    };
+    if (this.plugin) {
+      await this.plugin.initReader();
+      await this.plugin.startScan();
+      await this.plugin.addListener('onTagScanned', (data: { epc: string; rssi: number }) => {
+        if (!this.isScanning) return;
+        const epc = data.epc;
+        let foundItem = this.masterInventory.find(item => item.epc === epc);
+        if (foundItem) {
+          onItemScanned(foundItem);
+        } else {
+          const newItem: JewelryItem = {
+            epc: epc,
+            name: 'Uncatalogued Item',
+            category: 'Unknown',
+            price: 0,
+            imageUrl: `https://picsum.photos/seed/${epc}/200`,
+            showroomArea: 'Unknown',
+            counterName: 'Unknown',
+          };
+          onItemScanned(newItem);
+        }
+      });
+    }
   }
 
-  public stopScan(): void {
+  public async stopScan(): Promise<void> {
     if (!this.isScanning) {
       return;
     }
     console.log('Stopping RFID scan listener.');
     this.isScanning = false;
-    // Clean up the global function to prevent memory leaks
-    if (window.onRfidScan) {
-      // @ts-ignore
-      delete window.onRfidScan;
+    if (this.plugin) {
+      await this.plugin.stopScan();
     }
   }
 }

@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
+import { Plugins } from '@capacitor/core';
 import { JewelryItem } from '../types';
 import rfidService from '../services/rfidService';
 import Header from './common/Header';
@@ -10,9 +11,14 @@ interface ScanScreenProps {
   masterInventory: JewelryItem[];
 }
 
+const { UhfReaderPlugin } = Plugins as any;
+
 const ScanScreen: React.FC<ScanScreenProps> = ({ onScanComplete, onBack, masterInventory }) => {
   const [isScanning, setIsScanning] = useState(false);
   const [scannedItems, setScannedItems] = useState<Map<string, JewelryItem>>(new Map());
+  const [powerLevel, setPowerLevel] = useState(30);
+  const [filterEnabled, setFilterEnabled] = useState(false);
+  const [filterParams, setFilterParams] = useState({ bank: 1, ptr: 32, len: 96, data: '' });
   const listRef = useRef<HTMLDivElement>(null);
 
   const handleScan = useCallback((item: JewelryItem) => {
@@ -33,14 +39,27 @@ const ScanScreen: React.FC<ScanScreenProps> = ({ onScanComplete, onBack, masterI
     }
   }, [scannedItems]);
 
-  const startScan = () => {
+  const startScan = async () => {
     setScannedItems(new Map());
-    rfidService.updateMasterInventory(masterInventory); // Ensure service has latest inventory
+    rfidService.updateMasterInventory(masterInventory);
+    if (UhfReaderPlugin) {
+      await UhfReaderPlugin.initReader();
+      await UhfReaderPlugin.setPower({ level: powerLevel });
+      if (filterEnabled) {
+        await UhfReaderPlugin.setFilter(filterParams);
+      } else {
+        await UhfReaderPlugin.disableFilter();
+      }
+      await UhfReaderPlugin.startScan();
+    }
     rfidService.startScan(handleScan);
     setIsScanning(true);
   };
 
-  const stopScan = () => {
+  const stopScan = async () => {
+    if (UhfReaderPlugin) {
+      await UhfReaderPlugin.stopScan();
+    }
     rfidService.stopScan();
     setIsScanning(false);
   };
@@ -101,6 +120,40 @@ const ScanScreen: React.FC<ScanScreenProps> = ({ onScanComplete, onBack, masterI
       </main>
 
       <footer className="p-4 bg-zinc-900/80 backdrop-blur-sm border-t border-purple-500/20">
+        <div className="grid grid-cols-2 gap-4 mb-4">
+          <div>
+            <label className="block text-xs text-gray-400 mb-1">Power Level</label>
+            <input
+              type="number"
+              min={1}
+              max={30}
+              value={powerLevel}
+              onChange={e => setPowerLevel(Number(e.target.value))}
+              className="w-full bg-zinc-800 text-white py-2 px-2 rounded mb-2 border border-purple-500/20"
+              disabled={isScanning}
+            />
+          </div>
+          <div>
+            <label className="block text-xs text-gray-400 mb-1">Filter (hex)</label>
+            <input
+              type="text"
+              value={filterParams.data}
+              onChange={e => setFilterParams({ ...filterParams, data: e.target.value })}
+              className="w-full bg-zinc-800 text-white py-2 px-2 rounded mb-2 border border-purple-500/20"
+              disabled={isScanning}
+            />
+            <label className="inline-flex items-center text-xs text-gray-400">
+              <input
+                type="checkbox"
+                checked={filterEnabled}
+                onChange={e => setFilterEnabled(e.target.checked)}
+                className="mr-2"
+                disabled={isScanning}
+              />
+              Enable Filter
+            </label>
+          </div>
+        </div>
         <div className="grid grid-cols-2 gap-4">
           {!isScanning ? (
             <button
